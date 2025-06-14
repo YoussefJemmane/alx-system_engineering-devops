@@ -1,2 +1,2 @@
 #!/bin/bash
-echo $((WATER + STIR)) | tr '0123456789' 'bestchol' 
+printf "%o\n" $((WATER + STIR)) | tr '01234567' 'bestchol' 
