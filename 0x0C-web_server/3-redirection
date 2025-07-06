@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Script to configure Nginx with a 301 redirect from /redirect_me to a specific URL
+
+# Update package list and install nginx
+apt-get update -y
+apt-get install nginx -y
+
+# Create a simple HTML page for the root
+mkdir -p /var/www/html
+chown -R www-data:www-data /var/www/html
+echo "Hello World!" > /var/www/html/index.html
+
+# Add 301 redirect to nginx default config using sed
+sed -i '/server_name _;/a \\n    location /redirect_me {\n        return 301 https://www.youtube.com/watch?v=QH2-TGUlwu4;\n    }\n' /etc/nginx/sites-available/default
+
+# Restart nginx to apply changes
+service nginx restart
