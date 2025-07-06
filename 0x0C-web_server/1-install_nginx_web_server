@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+# Script that configures a new Ubuntu machine to install and configure nginx
+
+# Update package list
+apt-get update -y
+
+# Check what's running on port 80 and stop it
+echo "Checking for services on port 80..."
+
+# Stop apache2 if it's running (common conflict)
+service apache2 stop 2>/dev/null || echo "Apache2 not running"
+
+# Kill any process using port 80
+fuser -k 80/tcp 2>/dev/null || echo "No process to kill on port 80"
+
+# Install nginx
+apt-get install nginx -y
+
+# Create a simple HTML page with "Hello World!" content
+echo "Hello World!" > /var/www/html/index.html
+
+# Ensure nginx owns the web directory
+chown -R www-data:www-data /var/www/html
+
+# Start nginx using service command only
+service nginx start
+
+# Enable nginx to start on boot
+update-rc.d nginx enable
+
+# If service command fails, start nginx manually
+if ! pgrep nginx > /dev/null; then
+    echo "Starting nginx manually..."
+    /usr/sbin/nginx
+fi
+
+# Verify nginx is running
+if pgrep nginx > /dev/null; then
+    echo "Nginx is running successfully"
+else
+    echo "Failed to start nginx"
+fi
