@@ -1,29 +1,40 @@
-#!/bin/bash
-# 0-world_wide_web
-# Usage: ./0-world_wide_web domain [subdomain]
-# Audits DNS A records for www, lb-01, web-01, web-02 or a specific subdomain
+#!/usr/bin/env bash
+# Script that displays information about subdomains
 
+# Function to get subdomain information
 get_subdomain_info() {
     local domain="$1"
-    local sub="$2"
-    local fqdn="$sub.$domain"
-    local dig_out
-    dig_out=$(dig +short -t A $fqdn)
-    if [ -n "$dig_out" ]; then
-        echo "The subdomain $sub is a A record and points to $dig_out"
+    local subdomain="$2"
+    
+    # Use dig to get DNS information and parse with awk
+    local result=$(dig "${subdomain}.${domain}" | grep -A1 'ANSWER SECTION:' | tail -1)
+    
+    if [[ -n "$result" ]]; then
+        # Parse the dig output with awk to extract record type and destination
+        echo "$result" | awk -v subdomain="$subdomain" '{
+            record_type = $4
+            destination = $5
+            print "The subdomain " subdomain " is a " record_type " record and points to " destination
+        }'
     fi
 }
 
-main() {
-    domain="$1"
-    subdomain="$2"
-    if [ -z "$subdomain" ]; then
-        for sub in www lb-01 web-01 web-02; do
-            get_subdomain_info "$domain" "$sub"
-        done
-    else
-        get_subdomain_info "$domain" "$subdomain"
-    fi
-}
+# Main script logic
+domain="$1"
+subdomain="$2"
 
-main "$@"
+# Check if domain parameter is provided
+if [[ -z "$domain" ]]; then
+    echo "Usage: $0 domain [subdomain]"
+    exit 1
+fi
+
+# If subdomain is specified, display info for that subdomain only
+if [[ -n "$subdomain" ]]; then
+    get_subdomain_info "$domain" "$subdomain"
+else
+    # Display info for default subdomains in specific order
+    for sub in www lb-01 web-01 web-02; do
+        get_subdomain_info "$domain" "$sub"
+    done
+fi
